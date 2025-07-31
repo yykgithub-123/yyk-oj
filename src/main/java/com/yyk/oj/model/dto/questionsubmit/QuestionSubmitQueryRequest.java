@@ -22,7 +22,7 @@ public class QuestionSubmitQueryRequest extends PageRequest implements Serializa
     /**
      * 提交状态
      */
-    private Integer status;
+    private String status;
 
     /**
      * 题目 id
@@ -34,6 +34,7 @@ public class QuestionSubmitQueryRequest extends PageRequest implements Serializa
      * 用户 id
      */
     private Long userId;
+
 
     private static final long serialVersionUID = 1L;
 }

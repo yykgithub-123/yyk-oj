@@ -42,7 +42,7 @@ public enum QuestionSubmitStatusEnum {
      * @param value
      * @return
      */
-    public static QuestionSubmitStatusEnum getEnumByValue(Integer value) {
+    public static QuestionSubmitStatusEnum getEnumByValue(String value) {
         if (ObjectUtils.isEmpty(value)) {
             return null;
         }

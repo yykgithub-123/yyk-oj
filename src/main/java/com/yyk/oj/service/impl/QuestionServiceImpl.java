@@ -1,5 +1,6 @@
 package com.yyk.oj.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -11,6 +12,7 @@ import com.yyk.oj.model.dto.question.QuestionQueryRequest;
 import com.yyk.oj.model.entity.*;
 import com.yyk.oj.model.entity.Question;
 import com.yyk.oj.model.entity.User;
+import com.yyk.oj.model.vo.QuestionAdminVo;
 import com.yyk.oj.model.vo.QuestionVO;
 import com.yyk.oj.model.vo.UserVO;
 import com.yyk.oj.service.QuestionService;
@@ -20,6 +22,7 @@ import com.yyk.oj.utils.SqlUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -35,8 +38,6 @@ import java.util.stream.Collectors;
 @Service
 public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
     implements QuestionService {
-
-
     @Resource
     private UserService userService;
 
@@ -116,6 +117,13 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
         return queryWrapper;
     }
 
+    /**
+     * 获取题目封装(连表查询)
+     *
+     * @param question
+     * @param request
+     * @return
+     */
     @Override
     public QuestionVO getQuestionVO(Question question, HttpServletRequest request) {
         QuestionVO questionVO = QuestionVO.objToVo(question);
@@ -156,7 +164,32 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
         return questionVOPage;
     }
 
-
+    @Override
+    public Page<QuestionAdminVo> getQuestionAdminVOPage(Page<Question> questionPage, HttpServletRequest request) {
+        List<Question> questionList = questionPage.getRecords();
+        Page<QuestionAdminVo> questionAdminVoPage = new Page<>(questionPage.getCurrent(), questionPage.getSize(), questionPage.getTotal());
+        if (CollUtil.isEmpty(questionList)) {
+            return questionAdminVoPage;
+        }
+        // 1. 关联查询用户信息
+        Set<Long> userIdSet = questionList.stream().map(Question::getUserId).collect(Collectors.toSet());
+        Map<Long, List<User>> userIdUserListMap = userService.listByIds(userIdSet).stream()
+                .collect(Collectors.groupingBy(User::getId));
+        // 填充信息
+        List<QuestionAdminVo> questionAdminVos = questionList.stream().map(question -> {
+            QuestionAdminVo questionAdminVo = new QuestionAdminVo();
+            BeanUtils.copyProperties(question, questionAdminVo);
+            Long userId = question.getUserId();
+            User user = null;
+            if (userIdUserListMap.containsKey(userId)) {
+                user = userIdUserListMap.get(userId).get(0);
+            }
+            questionAdminVo.setUser(userService.getUserVO(user));
+            return questionAdminVo;
+        }).collect(Collectors.toList());
+        questionAdminVoPage.setRecords(questionAdminVos);
+        return questionAdminVoPage;
+    }
 }
 
 

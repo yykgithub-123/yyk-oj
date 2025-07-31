@@ -10,6 +10,7 @@ import com.yyk.oj.common.ResultUtils;
 import com.yyk.oj.constant.UserConstant;
 import com.yyk.oj.exception.BusinessException;
 import com.yyk.oj.exception.ThrowUtils;
+import com.yyk.oj.mapper.UserMapper;
 import com.yyk.oj.model.dto.question.*;
 import com.yyk.oj.model.dto.question.*;
 import com.yyk.oj.model.dto.questionsubmit.QuestionSubmitAddRequest;
@@ -17,6 +18,7 @@ import com.yyk.oj.model.dto.questionsubmit.QuestionSubmitQueryRequest;
 import com.yyk.oj.model.entity.Question;
 import com.yyk.oj.model.entity.QuestionSubmit;
 import com.yyk.oj.model.entity.User;
+import com.yyk.oj.model.vo.QuestionAdminVo;
 import com.yyk.oj.model.vo.QuestionSubmitVO;
 import com.yyk.oj.model.vo.QuestionVO;
 import com.yyk.oj.service.QuestionService;
@@ -48,6 +50,8 @@ public class QuestionController {
     @Resource
     private QuestionSubmitService questionSubmitService;
 
+    @Resource
+    private UserMapper userMapper;
     private final static Gson GSON = new Gson();
 
     // region 增删改查
@@ -235,21 +239,22 @@ public class QuestionController {
     }
 
     /**
-     * 分页获取题目列表（仅管理员）
+     * 分页获取列表（仅管理员）
      *
      * @param questionQueryRequest
-     * @param request
      * @return
      */
     @PostMapping("/list/page")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Page<Question>> listQuestionByPage(@RequestBody QuestionQueryRequest questionQueryRequest,
-                                                   HttpServletRequest request) {
+    public BaseResponse<Page<QuestionAdminVo>> listQuestionByPage(@RequestBody QuestionQueryRequest questionQueryRequest,
+                                                                  HttpServletRequest request) {
         long current = questionQueryRequest.getCurrent();
         long size = questionQueryRequest.getPageSize();
+        // 限制爬虫
+        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
         Page<Question> questionPage = questionService.page(new Page<>(current, size),
                 questionService.getQueryWrapper(questionQueryRequest));
-        return ResultUtils.success(questionPage);
+        return ResultUtils.success(questionService.getQuestionAdminVOPage(questionPage, request));
     }
 
     // endregion

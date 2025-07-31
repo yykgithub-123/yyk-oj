@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.yyk.oj.model.dto.question.QuestionQueryRequest;
 import com.yyk.oj.model.entity.Question;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.yyk.oj.model.vo.QuestionAdminVo;
 import com.yyk.oj.model.vo.QuestionVO;
 
 import javax.servlet.http.HttpServletRequest;
@@ -50,5 +51,7 @@ public interface QuestionService extends IService<Question> {
      * @return
      */
     Page<QuestionVO> getQuestionVOPage(Page<Question> questionPage, HttpServletRequest request);
-    
+
+    Page<QuestionAdminVo> getQuestionAdminVOPage(Page<Question> questionPage, HttpServletRequest request);
+
 }
